@@ -46,7 +46,7 @@ class Listener(AtlasThread):
     except socket.timeout:
       pass
     else:
-      self.logger.debug('Handling incomming message to Listener.')
+      self.logger.debug('Handling incoming message to Listener.')
       message = pickle.loads(message)
       if isinstance(message, Discover):
         self.logger.debug('Listener received Discover message from ' + 
@@ -54,7 +54,7 @@ class Listener(AtlasThread):
           )
         self._discover_reply(addr)
       if isinstance(message, InsertTopic):
-        self.logger.debug('Listener rceived InsertTopic message')
+        self.logger.debug('Listener received InsertTopic message')
         self.inserted_topic = message.topic
         self.logger.debug('Val: ' + str(self.inserted_topic.temp))
         self.insert_topic_event.set()
@@ -95,10 +95,10 @@ class Discoverer(AtlasThread):
           self.discover_reply_event.set()
     time.sleep(5)
   
-  def broadcast_topic(self, topic):
+  def broadcast_message(self, message):
     for addr in self.factories:
-      self.logger.debug('Sending topic to: ' + str(addr) + '.')
-      self.socket.sendto(pickle.dumps(InsertTopic(topic)), addr)
+      self.logger.debug('Sending message to: ' + str(addr) + '.')
+      self.socket.sendto(pickle.dumps(InsertTopic(message)), addr)
 
 class Factory(object):
   def __init__(self):
@@ -120,7 +120,7 @@ class Factory(object):
     while self.run_event.is_set():
       if self.listener.insert_topic_event.wait(1):
         self.listener.insert_topic_event.clear()
-        self.logger.debug('Insert topic event occuring.')
+        self.logger.debug('Insert topic event occurring.')
         for subscriber in self.subscribers:
           if subscriber.topic == self.listener.inserted_topic:
             self.logger.debug('Setting subscriber topic, ' + 

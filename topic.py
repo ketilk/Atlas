@@ -1,7 +1,11 @@
-class TopicDescription(object):
-  def __init__(self, name, key):
+import time
+
+class Topic(object):
+  def __init__(self, name, key, payload=None):
     self.name = name
     self.key = key
+    self.timestamp = time.time()
+    self.payload = payload
     
   def __eq__(self, other):
     if isinstance(other, TopicDescription):
@@ -10,8 +14,7 @@ class TopicDescription(object):
               )
     else:
       return False
-    
-class TemperatureTopic(TopicDescription):
-  def __init__(self, key):
-    TopicDescription.__init__(self, 'Temperature topic', key)
-    self.temp = 0
+      
+    def update_payload(self, payload):
+      self.payload = payload
+      self.time = time.time()
