@@ -2,6 +2,7 @@ import logging
 import socket
 import pickle
 import time
+import threading
 from atlas_thread import AtlasThread
 from listener import Listener
 from talker import Talker
@@ -23,11 +24,10 @@ class Atlas(AtlasThread):
         pass
       else:
         break
-    self.listener.start()
     
     self.participants = []
     self.discover_interval = 5
-    self.discover_time = time.time() - self.discover_interval
+    self.discover_time = time.time() - self.discover_interval - 1
     
     self.subscribers = []
     self.available_topics = []
@@ -38,7 +38,7 @@ def _do_work(self):
     self._handle_message(message)
   
   if self.discover_time + self.discover_interval < time.time():
-    self._discover_participants()
+    threading.thread.start_new_thread(self._discover_participants())
     self.discover_time = time.time()
     
 def _handle_message(self, message):
