@@ -1,8 +1,6 @@
 class Publisher(object):
-  def __init__(self, topic, broadcast_message):
-    self._broadcast_message = broadcast_message
+  def __init__(self, atlas):
+    self.atlas = atlas
   
   def publish(self, topic):
-    self._broadcast_topic(topic)
-
-      
+    self.atlas.broadcast(InsertTopic(topic))

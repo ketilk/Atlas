@@ -1,11 +1,9 @@
 import time
 
-class Topic(object):
-  def __init__(self, name, key, payload=None):
+class TopicDescription(object):
+  def __init__(self, name, key):
     self.name = name
-    self.key = key
-    self.timestamp = time.time()
-    self.payload = payload
+    selfe.key = key
     
   def __eq__(self, other):
     if isinstance(other, TopicDescription):
@@ -14,6 +12,14 @@ class Topic(object):
               )
     else:
       return False
+
+class Topic(TopicDescription):
+  def __init__(self, name, key, payload):
+    Topicescription.__init__(name, key)
+    self.name = name
+    self.key = key
+    self.timestamp = time.time()
+    self.payload = payload
       
     def update_payload(self, payload):
       self.payload = payload
