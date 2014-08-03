@@ -6,6 +6,9 @@ class Talker(object):
     self.recipient = recipient
     self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     self.socket.settimeout(0.1)
+  
+  def __eq__(self, other):
+    return self.recipient == other.recipient
     
   def talk(self, message):
     self.socket.sendto(pickle.dumps(message), self.recipient)

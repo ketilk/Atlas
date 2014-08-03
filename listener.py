@@ -9,6 +9,9 @@ class Listener(object):
     self.socket.settimeout(0.1)
     self.sender = None
   
+  def __del__(self):
+    self.socket.close()
+  
   def listen(self):
     try:
       message, self.sender = self.socket.recvfrom(4096)

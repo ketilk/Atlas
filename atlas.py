@@ -3,83 +3,126 @@ import socket
 import pickle
 import time
 import threading
-from atlas_thread import AtlasThread
+
 from listener import Listener
 from talker import Talker
 from communication import Discover
 from communication import DiscoverReply
 from communication import InsertTopic
+from communication import RegisterPublisher
 from subscriber import Subscriber
 from publisher import Publisher
 
 PORT_RANGE = range(20000, 20010)
 
-class Atlas(AtlasThread):
+class AtlasError(Exception):
+  pass
+
+class Atlas(object):
   def __init__(self):
     self.logger = logging.getLogger(__name__)
+    
     for port in PORT_RANGE:
       try:
         self.listener = Listener(port)
-      except port.error:
-        pass
+      except socket.error, e:
+        self.logger.info('Error opening listener on ' + str(port))
+        self.error = e
+        self.listener = None
       else:
+        self.logger.debug('Listener up on ' + str(self.listener.address) + '.')
         break
     
+    if not self.listener:
+      self.logger.warning('Failed to create listener.')
+      raise self.error
+    
     self.participants = []
+    self.participants.append(Talker(self.listener.address))
     self.discover_interval = 5
-    self.discover_time = time.time() - self.discover_interval - 1
+    self.discover_time = 0
     
     self.subscribers = []
     self.available_topics = []
     
-def _do_work(self):
-  message = listener.listen()
-  if message:
-    self._handle_message(message)
-  
-  if self.discover_time + self.discover_interval < time.time():
-    threading.thread.start_new_thread(self._discover_participants())
-    self.discover_time = time.time()
+    self.listen_thread = threading.Thread(target=self._listen)
+    self.discover_thread = threading.Thread(target=self._discover_participants)
+    self.run_event = threading.Event()
+    self.run_event.set()
     
-def _handle_message(self, message):
-  if isinstance(message, Discover):
-    listener.reply(DiscoverReply(self.available_topics))
-  elif isinstance(message, DiscoverReply):
-    for available_topic in message.available_topics:
-      if available_topic not in self.available_topics:
-        available_topics.add(available_topic)
-  elif isinstance(message, RegisterPublisher):
-    if message.topic not in self.available_topics:
-      self.available_topics.add(message.topic)
-  elif isinstance(message, InsertTopic):
-    for subscriber in self.subscribers:
-      if subscriber.topic == InsertTopic.topic:
-        subscriber.set_topic(InsertTopic.topic)
+  def __enter__(self):
+    self.listen_thread.start()
+    self.discover_thread.start()
+    return self
+    
+  def __exit__(self, type, value, traceback):
+    self.logger.debug('Stopping Atlas at: ' + str(time.time()))
+    self.run_event.clear()
+    
+  def _listen(self):
+    self.logger.debug('Starting Atlas at: ' + str(time.time()))
+    while self.run_event.is_set():
+      message = self.listener.listen()
+      if message:
+        self.logger.debug('Handling message: ' + str(message))
+        if isinstance(message, Discover):
+          self.logger.debug('Sending discover reply to ' + str(self.listener.sender))
+          self.listener.reply(DiscoverReply(self.available_topics))
+        elif isinstance(message, RegisterPublisher):
+          if message.topic not in self.available_topics:
+            self.available_topics.add(message.topic)
+        elif isinstance(message, InsertTopic):
+          [message.topic 
+            if _topic == message.topic else _topic 
+            for _topic in self.available_topics]
+          for subscriber in self.subscribers:
+            if subscriber.topic == message.topic:
+              subscriber.set_topic(message.topic)
 
-def _discover_participants(self):
-  for port in PORT_RANGE:
-    talker = Talker(('', port))
-    talker.talk(Discover())
-    reply = talker.listen()
-    if isinstance(reply, DiscoverReply):
-      self.participants.add(talker)
-      for available_topic in reply.available_topics:
-        if available_topic not in self.available_topics:
-          self.available_topics.add(available_topic)
+  def _discover_participants(self):
+    self.logger.debug('Starting discover thread.')
+    while self.run_event.is_set():
+      if self.discover_time + self.discover_interval < time.time():
+        self.discover_time = time.time()
+        self.logger.debug('Looking for participants')
+        for port in PORT_RANGE:
+          talker = Talker(('', port))
+          self.logger.debug('Looking for participant at: ' + str(talker.recipient))
+          talker.talk(Discover())
+          reply = talker.listen()
+          if isinstance(reply, DiscoverReply):
+            self.logger.debug('Received discover reply from: ' + str(talker.recipient))
+            if talker not in self.participants:
+              self.participants.append(talker)
+            for available_topic in reply.available_topics:
+              if available_topic not in self.available_topics:
+                self.available_topics.append(available_topic)
+            self.logger.debug('Found participant at: ' + str(talker.recipient))
+      else:
+        time.sleep(0.1)
     
   
   def get_subscriber(self, topic):
-    subscriber = Subscriber(topic)
-    self.subscribers.append(subscriber)
-    return subscriber
+    subscriber = None
+    for _topic in self.available_topics:
+      if topic == _topic:
+        self.logger.info('Creating subscriber with topic ' + str(_topic))
+        subscriber = Subscriber(_topic)
+    if subscriber:
+      self.subscribers.append(subscriber)
+      return subscriber
+    else:
+      self.logger.info('Requested subscriber with topic that does not exist.')
+      raise AtlasError()
   
   def get_publisher(self, topic):
-    available_topics.add(topic)
+    self.logger.info('Creating publisher with topic ' + str(topic))
+    self.available_topics.append(topic)
     return Publisher(topic, self)
   
-  def broadcast(self, message):
+  def broadcast_topic(self, topic):
     for participant in self.participants:
-      participant.talk(message)
+      participant.talk(InsertTopic(topic))
   
   def get_available_topics(self):
     return self.available_topics
