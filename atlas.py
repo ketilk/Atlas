@@ -30,7 +30,7 @@ class Atlas(object):
         self.error = e
         self.listener = None
       else:
-        self.logger.debug('Listener up on ' + str(self.listener.address) + '.')
+        self.logger.info('Listener up on ' + str(self.listener.address) + '.')
         break
     
     if not self.listener:
