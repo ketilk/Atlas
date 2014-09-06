@@ -112,7 +112,7 @@ class Atlas(object):
       self.subscribers.append(subscriber)
       return subscriber
     else:
-      self.logger.info('Requested subscriber with topic that does not exist.')
+      self.logger.info(str(topic) + ' does not exist.')
       raise AtlasError()
   
   def get_publisher(self, topic):
