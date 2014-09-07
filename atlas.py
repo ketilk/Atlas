@@ -1,5 +1,6 @@
 import logging
 import socket
+import time
 import threading
 
 from listener import Listener
@@ -75,7 +76,8 @@ class Atlas(object):
   def _discover_participants(self):
     self.logger.debug('Starting discover thread.')
     while True:
-      if self.discover_time + self.discover_interval < time.time():
+      now = time.time()
+      if self.discover_time + self.discover_interval < now:
         self.discover_time = time.time()
         self.logger.debug('Looking for participants')
         for port in PORT_RANGE:
