@@ -133,7 +133,8 @@ class AtlasDaemon(Daemon):
   def run(self):
     with Atlas() as atlas:
       while True:
-        try: 
+        try:
+          self.logger.debug("looping.") 
           self._loop()
         except:
           self.logger.exception("Caught exception in Atlas daemon thread.")
