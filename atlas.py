@@ -50,7 +50,7 @@ class Atlas(object):
     self.discover_thread = threading.Thread(target=self._discover_participants)
     self.run_event = threading.Event()
     self.run_event.set()
-    self.logger.debug("Atlas instiantiated.")
+    self.logger.debug("Atlas instantiated.")
     
   def __enter__(self):
     self.logger.debug('Starting Atlas at: ' + str(time.time()))
@@ -131,7 +131,7 @@ class Atlas(object):
 class AtlasDaemon(Daemon):
   
   def run(self):
-    with Atlas() as self.atlas:
+    with Atlas() as atlas:
       while True:
         try: 
           self._loop()
