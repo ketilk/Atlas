@@ -50,8 +50,10 @@ class Atlas(object):
     self.discover_thread = threading.Thread(target=self._discover_participants)
     self.run_event = threading.Event()
     self.run_event.set()
+    self.logger.debug("Atlas instiantiated.")
     
   def __enter__(self):
+    self.logger.debug('Starting Atlas at: ' + str(time.time()))
     self.listen_thread.start()
     self.discover_thread.start()
     return self
@@ -61,7 +63,7 @@ class Atlas(object):
     self.run_event.clear()
     
   def _listen(self):
-    self.logger.debug('Starting Atlas at: ' + str(time.time()))
+    self.logger.debug("Going into listener method.")
     while self.run_event.is_set():
       message = self.listener.listen()
       if message:
@@ -79,6 +81,7 @@ class Atlas(object):
           for subscriber in self.subscribers:
             if subscriber.topic == message.topic:
               subscriber.set_topic(message.topic)
+    self.logger.debug("Leaving listener method.")
 
   def _discover_participants(self):
     self.logger.debug('Starting discover thread.')
@@ -101,7 +104,7 @@ class Atlas(object):
             self.logger.debug('Found participant at: ' + str(talker.recipient))
       else:
         time.sleep(0.1)
-    
+    self.logger.debug("Leaving discover method.")
   
   def get_subscriber(self, topic):
     subscriber = None
