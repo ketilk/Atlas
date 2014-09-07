@@ -5,7 +5,7 @@ import time
 import threading
 
 from listener import Listener
-from talker import Talker
+from talker import Talker, TalkerTimeout
 from communication import Discover
 from communication import DiscoverReply
 from communication import InsertTopic
