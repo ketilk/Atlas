@@ -128,7 +128,7 @@ class Atlas(object):
 class AtlasDaemon(Daemon):
   
   def _init(self):
-    self.logger self.logger = logging.getLogger(__name__)
+    self.logger = logging.getLogger(__name__)
   
   def run(self):
     with Atlas as self.atlas:
