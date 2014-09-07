@@ -9,6 +9,8 @@ class Daemon:
   task. Override _init() for initialization and _cleanup() for cleaning up.
   """
   def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+    self.logger = logging.getLogger(__name__)
+    self.logger.info("Instantiating daemon.")
     self.stdin = stdin
     self.stdout = stdout
     self.stderr = stderr
