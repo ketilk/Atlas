@@ -127,11 +127,8 @@ class Atlas(object):
   
 class AtlasDaemon(Daemon):
   
-  def _init(self):
-    self.logger = logging.getLogger(__name__)
-  
   def run(self):
-    with Atlas as self.atlas:
+    with Atlas() as self.atlas:
       while True:
         try: 
           self._loop()
