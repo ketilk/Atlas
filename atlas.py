@@ -84,15 +84,19 @@ class Atlas(object):
           talker = Talker(('', port))
           self.logger.debug('Looking for participant at: ' + str(talker.recipient))
           talker.talk(Discover())
-          reply = talker.listen()
-          if isinstance(reply, DiscoverReply):
-            self.logger.debug('Received discover reply from: ' + str(talker.recipient))
-            if talker not in self.participants:
-              self.participants.append(talker)
-            for available_topic in reply.available_topics:
-              if available_topic not in self.available_topics:
-                self.available_topics.append(available_topic)
-            self.logger.debug('Found participant at: ' + str(talker.recipient))
+          try:
+            reply = talker.listen()
+          except TalkerTimeout:
+            continue
+          else:
+            if isinstance(reply, DiscoverReply):
+              self.logger.debug('Received discover reply from: ' + str(talker.recipient))
+              if talker not in self.participants:
+                self.participants.append(talker)
+              for available_topic in reply.available_topics:
+                if available_topic not in self.available_topics:
+                  self.available_topics.append(available_topic)
+              self.logger.debug('Found participant at: ' + str(talker.recipient))
       else:
         time.sleep(0.1)
     self.logger.debug("Leaving discover method.")
