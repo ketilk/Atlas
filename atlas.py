@@ -32,11 +32,13 @@ class Atlas(object):
         self.listener = None
       else:
         self.logger.info('Listener up on ' + str(self.listener.address) + '.')
+        self.listen_thread = threading.Thread(target=self._listen)
+        self.listen_thread.setDaemon(True)
+        self.listen_thread.start()
         break
     
     if not self.listener:
       self.logger.warning('Failed to create listener.')
-      raise self.error
     
     self.participants = []
     self.participants.append(Talker(self.listener.address))
@@ -46,25 +48,14 @@ class Atlas(object):
     self.subscribers = []
     self.available_topics = []
     
-    self.listen_thread = threading.Thread(target=self._listen)
     self.discover_thread = threading.Thread(target=self._discover_participants)
-    self.run_event = threading.Event()
-    self.run_event.set()
-    self.logger.debug("Atlas instantiated.")
-    
-  def __enter__(self):
-    self.logger.debug('Starting Atlas at: ' + str(time.time()))
-    self.listen_thread.start()
+    self.discover_thread.setDaemon(True)
     self.discover_thread.start()
-    return self
-    
-  def __exit__(self, type, value, traceback):
-    self.logger.debug('Stopping Atlas at: ' + str(time.time()))
-    self.run_event.clear()
+    self.logger.debug("Atlas instantiated.")
     
   def _listen(self):
     self.logger.debug("Going into listener method.")
-    while self.run_event.is_set():
+    while True:
       message = self.listener.listen()
       if message:
         self.logger.debug('Handling message: ' + str(message))
@@ -85,7 +76,7 @@ class Atlas(object):
 
   def _discover_participants(self):
     self.logger.debug('Starting discover thread.')
-    while self.run_event.is_set():
+    while True:
       if self.discover_time + self.discover_interval < time.time():
         self.discover_time = time.time()
         self.logger.debug('Looking for participants')
@@ -130,14 +121,19 @@ class Atlas(object):
   
 class AtlasDaemon(Daemon):
   
+  def _init(self):
+    self.atlas = Atlas()
+  
   def run(self):
-    with Atlas() as atlas:
       while True:
         try:
           self.logger.debug("looping.") 
           self._loop()
         except:
           self.logger.exception("Caught exception in Atlas daemon thread.")
+  
+  def _loop(self):
+    pass
   
   def get_publisher(self, topic):
     return self.atlas.get_publisher(topic)

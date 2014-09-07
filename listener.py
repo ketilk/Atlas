@@ -4,7 +4,6 @@ import pickle
 class Listener(object):
   def __init__(self, port=0):
     self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    self.socket.settimeout(0.1)
     self.socket.bind(('', port))
     self.address = self.socket.getsockname()
     self.sender = None
