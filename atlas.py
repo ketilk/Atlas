@@ -12,6 +12,7 @@ from communication import InsertTopic
 from communication import RegisterPublisher
 from subscriber import Subscriber
 from publisher import Publisher
+from daemon import Daemon
 
 PORT_RANGE = range(20000, 20010)
 
@@ -124,6 +125,21 @@ class Atlas(object):
     for participant in self.participants:
       participant.talk(InsertTopic(topic))
   
-  def get_available_topics(self):
-    return self.available_topics
-    
+class AtlasDaemon(Daemon):
+  
+  def _init(self):
+    self.logger self.logger = logging.getLogger(__name__)
+  
+  def run(self):
+    with Atlas as self.atlas:
+      while True:
+        try: 
+          self._loop()
+        except:
+          self.logger.exception("Caught exception in Atlas daemon thread.")
+  
+  def get_publisher(self, topic):
+    return self.atlas.get_publisher(topic)
+  
+  def get_subscriber(self, topic):
+    return self.atlas.get_subscriber(topic)
