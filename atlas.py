@@ -1,7 +1,5 @@
 import logging
 import socket
-import pickle
-import time
 import threading
 
 from listener import Listener
