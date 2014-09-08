@@ -10,7 +10,6 @@ class Daemon(object):
   """
   def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     self.logger = logging.getLogger(__name__)
-    self.logger.info("Instantiating daemon.")
     self.stdin = stdin
     self.stdout = stdout
     self.stderr = stderr
@@ -68,7 +67,7 @@ class Daemon(object):
     """
     Start the daemon
     """
-    self.logger.debug("===========Starting monitorer daemon.==============")
+    self.logger.debug("===========Starting  daemon.==============")
     # Check for a pidfile to see if the daemon already runs
     try:
       pf = file(self.pidfile,'r')

@@ -59,8 +59,8 @@ class Atlas(object):
     self.logger.debug("Atlas instantiated.")
     
   def _listen(self):
-    self.logger.debug("Going into listener method.")
     while True:
+      self.logger.debug("Listening...")
       message = self.listener.listen()
       if message:
         if isinstance(message, Discover):

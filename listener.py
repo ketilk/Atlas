@@ -12,14 +12,8 @@ class Listener(object):
     self.socket.close()
   
   def listen(self):
-    try:
-      message, self.sender = self.socket.recvfrom(4096)
-    except socket.timeout:
-      message = None
+    message, self.sender = self.socket.recvfrom(4096)
     return message
   
   def reply(self, message):
     self.socket.sendto(pickle.dumps(message), self.sender)
-    
-    
-    
