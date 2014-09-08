@@ -135,11 +135,10 @@ class Atlas(object):
       participant.talk(InsertTopic(topic))
   
 class AtlasDaemon(Daemon):
-  
-  def _init(self):
-    self.atlas = Atlas()
-  
+
   def run(self):
+    self.atlas = Atlas()
+    self._init()
       while True:
         try:
           self._loop()
