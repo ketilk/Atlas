@@ -119,7 +119,7 @@ class Atlas(object):
       self.logger.info(str(topic) + ' does not exist.')
       raise AtlasError()
   
-  def get_all_subscribers(self):
+  def get_subscribers(self):
     subscribers = []
     for topic in self.available_topics:
       subscribers.append(Subscriber(topic))

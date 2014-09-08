@@ -10,5 +10,6 @@ logging.basicConfig(filename="tail.log",
   level=logging.DEBUG)
 logger = logging.getLogger
     
-print "Starting."
-atlass = Atlas()
+atlas = Atlas()
+for subscriber in atlas.get_subscribers():
+  print subscriber.topic + "\n"
