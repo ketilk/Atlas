@@ -21,7 +21,7 @@ class AtlasError(Exception):
 class Atlas(object):
   def __init__(self):
     self.logger = logging.getLogger(__name__)
-    self.logger.logger("==========Instantiating Atlas==============")
+    self.logger.debug("==========Instantiating Atlas==============")
     
     for port in PORT_RANGE:
       try:
