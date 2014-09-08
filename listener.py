@@ -13,7 +13,7 @@ class Listener(object):
   
   def listen(self):
     message, self.sender = self.socket.recvfrom(4096)
-    return message
+    return pickle.loads(message)
   
   def reply(self, message):
     self.socket.sendto(pickle.dumps(message), self.sender)
