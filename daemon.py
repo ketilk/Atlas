@@ -69,6 +69,7 @@ class Daemon(object):
     """
     Start the daemon
     """
+    self.logger.debug("===========Starting monitorer daemon.==============")
     # Check for a pidfile to see if the daemon already runs
     try:
       pf = file(self.pidfile,'r')
@@ -90,7 +91,7 @@ class Daemon(object):
     """
     Stop the daemon
     """
-    
+    self.logger.debug("Stopping daemon")
     # Get the pid from the pidfile
     try:
       pf = file(self.pidfile,'r')
@@ -122,6 +123,7 @@ class Daemon(object):
     """
     Restart the daemon
     """
+    self.logger.debug("Restarting daemon")
     self.stop()
     self.start()
   
