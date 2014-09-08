@@ -47,9 +47,12 @@ class Atlas(object):
     self.subscribers = []
     self.available_topics = []
     
+    self._discover_participants()
+    
     self.discover_thread = threading.Thread(target=self._discover_participants)
     self.discover_thread.setDaemon(True)
     self.discover_thread.start()
+    
     self.logger.debug("Atlas instantiated.")
     
   def _listen(self):
@@ -114,6 +117,12 @@ class Atlas(object):
       self.logger.info(str(topic) + ' does not exist.')
       raise AtlasError()
   
+  def get_all_subscribers(self):
+    subscribers = []
+    for topic in self.available_topics:
+      subscribers.append(Subscriber(topic))
+    return subscribers
+  
   def get_publisher(self, topic):
     self.logger.info('Creating publisher with topic ' + str(topic))
     self.available_topics.append(topic)
@@ -131,7 +140,6 @@ class AtlasDaemon(Daemon):
   def run(self):
       while True:
         try:
-          self.logger.debug("looping.") 
           self._loop()
         except:
           self.logger.exception("Caught exception in Atlas daemon thread.")
