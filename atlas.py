@@ -31,9 +31,6 @@ class Atlas(object):
         self.listener = None
       else:
         self.logger.info('Listener up on ' + str(self.listener.address) + '.')
-        self.listen_thread = threading.Thread(target=self._listen)
-        self.listen_thread.setDaemon(True)
-        self.listen_thread.start()
         break
     
     if not self.listener:
@@ -47,11 +44,17 @@ class Atlas(object):
     self.subscribers = []
     self.available_topics = []
     
-    self._discover_participants()
+    self._discover()
     
-    self.discover_thread = threading.Thread(target=self._discover_participants)
-    self.discover_thread.setDaemon(True)
-    self.discover_thread.start()
+    if self.listener:
+      self.listen_thread = threading.Thread(target=self._listen)
+      self.listen_thread.setDaemon(True)
+      self.logger.debug("Starting listen thread.")
+      self.listen_thread.start()
+      self.discover_thread = threading.Thread(target=self._discover_participants)
+      self.discover_thread.setDaemon(True)
+      self.logger.debug('Starting discover thread.')
+      self.discover_thread.start()
     
     self.logger.debug("Atlas instantiated.")
     
@@ -60,49 +63,48 @@ class Atlas(object):
     while True:
       message = self.listener.listen()
       if message:
-        self.logger.debug('Handling message: ' + str(message))
         if isinstance(message, Discover):
-          self.logger.debug('Sending discover reply to ' + str(self.listener.sender))
+          self.logger.debug('Handling discover message from ' + 
+                            str(self.listener.sender))
           self.listener.reply(DiscoverReply(self.available_topics))
-        elif isinstance(message, RegisterPublisher):
-          if message.topic not in self.available_topics:
-            self.available_topics.add(message.topic)
         elif isinstance(message, InsertTopic):
+          self.logger.debug("Handling insert topic message.")
           [message.topic 
             if _topic == message.topic else _topic 
             for _topic in self.available_topics]
           for subscriber in self.subscribers:
             if subscriber.topic == message.topic:
               subscriber.set_topic(message.topic)
-    self.logger.debug("Leaving listener method.")
 
   def _discover_participants(self):
-    self.logger.debug('Starting discover thread.')
     while True:
       now = time.time()
       if self.discover_time + self.discover_interval < now:
-        self.discover_time = time.time()
-        self.logger.debug('Looking for participants')
-        for port in PORT_RANGE:
-          talker = Talker(('', port))
-          self.logger.debug('Looking for participant at: ' + str(talker.recipient))
-          talker.talk(Discover())
-          try:
-            reply = talker.listen()
-          except TalkerTimeout:
-            continue
-          else:
-            if isinstance(reply, DiscoverReply):
-              self.logger.debug('Received discover reply from: ' + str(talker.recipient))
-              if talker not in self.participants:
-                self.participants.append(talker)
-              for available_topic in reply.available_topics:
-                if available_topic not in self.available_topics:
-                  self.available_topics.append(available_topic)
-              self.logger.debug('Found participant at: ' + str(talker.recipient))
+        self._discover()
       else:
         time.sleep(0.1)
     self.logger.debug("Leaving discover method.")
+  
+  def _discover(self):
+    self.discover_time = time.time()
+    self.logger.debug('Looking for participants')
+    for port in PORT_RANGE:
+      talker = Talker(('', port))
+      self.logger.debug('Looking for participant at: ' + str(talker.recipient))
+      talker.talk(Discover())
+      try:
+        reply = talker.listen()
+      except TalkerTimeout:
+        continue
+      else:
+        if isinstance(reply, DiscoverReply):
+          self.logger.debug('Received discover reply from: ' + str(talker.recipient))
+          if talker not in self.participants:
+            self.participants.append(talker)
+          for available_topic in reply.available_topics:
+            if available_topic not in self.available_topics:
+              self.available_topics.append(available_topic)
+          self.logger.debug('Found participant at: ' + str(talker.recipient))
   
   def get_subscriber(self, topic):
     subscriber = None

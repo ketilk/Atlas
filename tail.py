@@ -11,4 +11,4 @@ logging.basicConfig(filename="tail.log",
 logger = logging.getLogger
     
 print "Starting."
-atlas = Atlas()
+atlass = Atlas()
