@@ -139,11 +139,11 @@ class AtlasDaemon(Daemon):
   def run(self):
     self.atlas = Atlas()
     self._init()
-      while True:
-        try:
-          self._loop()
-        except:
-          self.logger.exception("Caught exception in Atlas daemon thread.")
+    while True:
+      try:
+        self._loop()
+      except:
+        self.logger.exception("Caught exception in Atlas daemon thread.")
   
   def _loop(self):
     pass
