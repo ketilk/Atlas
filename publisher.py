@@ -1,10 +1,10 @@
-from topic import Topic
+import socket
+import pickle
+import topic
 
 class Publisher(object):
   def __init__(self, topic, atlas):
-    self.last_topic = topic
     self.atlas = atlas
-  
-  def publish(self, payload):
-    self.last_topic = Topic(self.last_topic, payload)
-    self.atlas.broadcast_topic(self.last_topic)
+    
+  def publish(self, topic):
+    self.atlas._broadcast(topic)

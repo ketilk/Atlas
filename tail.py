@@ -4,6 +4,9 @@ from atlas import Atlas
 import logging
 import time
 
+def topic_handler(topic):
+  print topic
+
 logging.basicConfig(filename="tail.log",
   filemode='a',
   format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -12,7 +15,10 @@ logging.basicConfig(filename="tail.log",
 logger = logging.getLogger
     
 atlas = Atlas()
-time.sleep(10)
-print len(atlas.available_topics)
-"""for subscriber in atlas.get_subscribers():
-  print subscriber.topic + "\n"""
+atlas.register_topic_handler(topic_handler)
+
+try:
+  while True:
+    time.sleep(1)
+finally:
+  pass

@@ -1,12 +1,17 @@
 import time
+from numbers import Number
+import logging
 
-class TopicDescription(object):
-  def __init__(self, name, key):
+class Topic(object):
+  
+  def __init__(self, name, key, data=None):
     self.name = name
     self.key = key
+    self.time = time.time()
+    self._data = data
     
   def __eq__(self, other):
-    if isinstance(other, TopicDescription):
+    if isinstance(other, Topic):
       return (self.name == other.name and
               self.key == other.key
               )
@@ -14,14 +19,13 @@ class TopicDescription(object):
       return False
   
   def __str__(self):
-    return self.name + ', ' + str(self.key)
-
-class Topic(TopicDescription):
-  def __init__(self, topic, payload):
-    TopicDescription.__init__(self, topic.name, topic.key)
-    self.timestamp = time.time()
-    self.payload = payload
+    return self.name + ', ' + self.key + ', ' + str(self._data)
+  
+  def get_data(self):
+    return self._data
+  
+  def set_data(self, data):
+    self.time = time.time()
+    self._data = data
     
-  def __str__(self):
-    return super(Topic, self).__str__() + ', ' + str(self.payload)
-    
+  data = property(get_data, set_data)

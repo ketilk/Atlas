@@ -1,14 +1,10 @@
 import logging
 import socket
+import pickle
 import time
 import threading
+import topic
 
-from listener import Listener
-from talker import Talker, TalkerTimeout
-from communication import Discover
-from communication import DiscoverReply
-from communication import InsertTopic
-from communication import RegisterPublisher
 from subscriber import Subscriber
 from publisher import Publisher
 from daemon import Daemon
@@ -16,125 +12,112 @@ from daemon import Daemon
 PORT_RANGE = range(20000, 20010)
 
 class AtlasError(Exception):
-  pass
+  
+  def __init__(self, text):
+    Exception.__init__(self, text)
+
+class Heartbeat(topic.Topic):
+  
+  def __init__(self, key):
+    topic.Topic.__init__(self, "heartbeat", key, 1)
 
 class Atlas(object):
+  
   def __init__(self):
     self.logger = logging.getLogger(__name__)
-    self.logger.debug("==========Instantiating Atlas==============")
-    
-    for port in PORT_RANGE:
-      try:
-        self.listener = Listener(port)
-      except socket.error, e:
-        self.logger.info('Error opening listener on ' + str(port))
-        self.error = e
-        self.listener = None
-      else:
-        self.logger.info('Listener up on ' + str(self.listener.address) + '.')
-        break
-    
-    if not self.listener:
-      self.logger.warning('Failed to create listener.')
-    
     self.participants = []
-    self.participants.append(Talker(self.listener.address))
-    self.discover_interval = 5
-    self.discover_time = 0
+    self.topic_handlers = []
+    self.lock = threading.Lock()
+    self.heartbeat = None
     
-    self.subscribers = []
-    self.available_topics = []
-    
-    self._discover()
-    
-    if self.listener:
-      self.listen_thread = threading.Thread(target=self._listen)
-      self.listen_thread.setDaemon(True)
-      self.logger.debug("Starting listen thread.")
-      self.listen_thread.start()
-      self.discover_thread = threading.Thread(target=self._discover_participants)
-      self.discover_thread.setDaemon(True)
-      self.logger.debug('Starting discover thread.')
-      self.discover_thread.start()
-    
-    self.logger.debug("Atlas instantiated.")
-    
-  def _listen(self):
-    while True:
-      self.logger.debug("Listening...")
-      message = self.listener.listen()
-      if message:
-        if isinstance(message, Discover):
-          self.logger.debug('Handling discover message from ' + 
-                            str(self.listener.sender))
-          self.listener.reply(DiscoverReply(self.available_topics))
-        elif isinstance(message, InsertTopic):
-          self.logger.debug("Handling insert topic message.")
-          [message.topic 
-            if _topic == message.topic else _topic 
-            for _topic in self.available_topics]
-          for subscriber in self.subscribers:
-            if subscriber.topic == message.topic:
-              subscriber.set_topic(message.topic)
+    thread = threading.Thread(target=self._listen)
+    thread.setDaemon(True)
+    thread.start()
 
-  def _discover_participants(self):
-    while True:
-      now = time.time()
-      if self.discover_time + self.discover_interval < now:
-        self._discover()
-      else:
-        time.sleep(0.1)
-    self.logger.debug("Leaving discover method.")
+    thread = threading.Thread(target=self._heartbeat)
+    thread.setDaemon(True)
+    thread.start()
+    
+    self.logger.debug("         === Atlas instantiated ===")
   
-  def _discover(self):
-    self.discover_time = time.time()
-    self.logger.debug('Looking for participants')
+  def _listen(self):
+    _socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    bound = False
+    
     for port in PORT_RANGE:
-      talker = Talker(('', port))
-      self.logger.debug('Looking for participant at: ' + str(talker.recipient))
-      talker.talk(Discover())
       try:
-        reply = talker.listen()
-      except TalkerTimeout:
+        _socket.bind(('', port))
+      except socket.error:
+        self.logger.debug("Error opening socket on " + str(port))
         continue
       else:
-        if isinstance(reply, DiscoverReply):
-          self.logger.debug('Received discover reply from: ' + str(talker.recipient))
-          if talker not in self.participants:
-            self.participants.append(talker)
-          for available_topic in reply.available_topics:
-            if available_topic not in self.available_topics:
-              self.available_topics.append(available_topic)
-          self.logger.debug('Found participant at: ' + str(talker.recipient))
-  
-  def get_subscriber(self, topic):
-    subscriber = None
-    for _topic in self.available_topics:
-      if topic == _topic:
-        self.logger.info('Creating subscriber with topic ' + str(_topic))
-        subscriber = Subscriber(_topic)
-    if subscriber:
-      self.subscribers.append(subscriber)
-      return subscriber
+        self.logger.info("Listener up on " + str(port))
+        self.heartbeat = Heartbeat(_socket.getsockname())
+        bound = True
+        break
+        
+    if not bound:
+      raise socket.error("No sockets available to Atlas.")
+    
+    try:
+      while True:
+        self.logger.debug("Listening...")
+        data, sender = _socket.recvfrom(4096)
+        if data:
+          self.logger.debug("Received data.")
+          self._handle_message(sender, pickle.loads(data))
+        else:
+          self.logger.debug("Received empty data block.")
+    finally:
+      _socket.close()
+
+  def _heartbeat(self):
+    _socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    try:
+      while True:
+        if self.heartbeat:
+          self.heartbeat.data = 1
+          for port in PORT_RANGE:
+            _socket.sendto(pickle.dumps(self.heartbeat), ('', port))
+        time.sleep(1)
+    finally:
+      _socket.close()
+
+  def _handle_message(self, sender, message):
+    if isinstance(message, Heartbeat):
+      self.logger.debug("Handling heartbeat topic from: " + str(message.key))
+      self.lock.acquire()
+      if message.key not in self.participants:
+        self.participants.append(message.key)
+      self.lock.release()
+    elif isinstance(message, topic.Topic):
+      self.logger.debug("Handling a topic.")
+      for handler in self.topic_handlers:
+        handler(message)
     else:
-      self.logger.info(str(topic) + ' does not exist.')
-      raise AtlasError()
-  
-  def get_subscribers(self):
-    subscribers = []
-    for topic in self.available_topics:
-      subscribers.append(Subscriber(topic))
-    return subscribers
-  
+      self.logger.info("Message handler called on unknown object.")
+
+  def _broadcast(self, message):
+    self.logger.debug("Broadcasting...")
+    _socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    self.lock.acquire()
+    for addr in self.participants:
+      _socket.sendto(pickle.dumps(message), addr)
+    self.lock.release()
+    _socket.close()
+
+  def register_topic_handler(self, handler):
+    self.topic_handlers.append(handler)
+    self.logger.debug("Topic handler registered.")
+
+  def get_subscriber(self, topic):
+    self.logger.info('Creating subscriber with topic ' + str(topic))
+    return Subscriber(topic, self)
+
   def get_publisher(self, topic):
-    self.logger.info('Creating publisher with topic ' + str(topic))
-    self.available_topics.append(topic)
+    self.logger.info('Creating publisher with topic: ' + str(topic))
     return Publisher(topic, self)
-  
-  def broadcast_topic(self, topic):
-    for participant in self.participants:
-      participant.talk(InsertTopic(topic))
-  
+
 class AtlasDaemon(Daemon):
 
   def run(self):
