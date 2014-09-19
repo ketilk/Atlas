@@ -129,11 +129,8 @@ class AtlasDaemon(Daemon):
       except:
         self.logger.exception("Caught exception in Atlas daemon thread.")
   
-  def _loop(self):
-    pass
-  
   def get_publisher(self, topic):
-    return self.atlas.get_publisher(topic)
+    return self.atlas.get_publisher(topic, self.atlas)
   
   def get_subscriber(self, topic):
-    return self.atlas.get_subscriber(topic)
+    return self.atlas.get_subscriber(topic, self.atlas)
