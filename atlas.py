@@ -68,6 +68,8 @@ class Atlas(object):
           self._handle_message(sender, pickle.loads(data))
         else:
           self.logger.debug("Received empty data block.")
+    except:
+      self.logger.exception("Listen exception.")
     finally:
       _socket.close()
 
@@ -80,6 +82,8 @@ class Atlas(object):
           for port in PORT_RANGE:
             _socket.sendto(pickle.dumps(self.heartbeat), ('', port))
         time.sleep(1)
+    except:
+      self.logger.exception("Heartbeat exception.")
     finally:
       _socket.close()
 

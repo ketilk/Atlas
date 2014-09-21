@@ -17,11 +17,9 @@ logger = logging.getLogger
 atlas = Atlas()
 atlas.register_topic_handler(topic_handler)
 
-try:
-  while True:
-    try:
-      time.sleep(1)
-    except:
-      break
-finally:
-  pass
+
+while True:
+  try:
+    time.sleep(1)
+  except:
+    break
