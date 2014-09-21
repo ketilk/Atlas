@@ -131,9 +131,3 @@ class Daemon(object):
     daemonized by start() or restart().
     """
     pass
-  
-  def _init(self):
-    """
-    You should override this method with any class initialization going on.
-    """
-    pass

@@ -19,6 +19,9 @@ atlas.register_topic_handler(topic_handler)
 
 try:
   while True:
-    time.sleep(1)
+    try:
+      time.sleep(1)
+    except:
+      break
 finally:
   pass
