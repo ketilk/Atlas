@@ -4,7 +4,9 @@ import topic
 
 class Publisher(object):
   def __init__(self, topic, atlas):
+    self.topic = topic
     self.atlas = atlas
     
-  def publish(self, topic):
-    self.atlas._broadcast(topic)
+  def publish(self, data):
+    self.topic.data = data
+    self.atlas._broadcast(self.topic)

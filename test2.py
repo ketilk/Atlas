@@ -10,12 +10,11 @@ from topic import Topic
 class TestDaemon(atlas.AtlasDaemon):
   
   def _init(self):
-    self.topic = Topic("temperature", "tester", 5)
-    self.publisher = self.get_publisher(self.topic)
+    self.topic = Topic("temperature", "tester")
+    self.subscriber = self.get_subscriber(self.topic)
   
   def _loop(self):
-    self.publisher.publish(5 + 3 * sin(time.time()/30 * 2 * pi))
-    time.sleep(1)
+    self.logger.info(self.subscriber.get_topic())
 
 import logging
 import sys
@@ -28,7 +27,7 @@ if __name__ == '__main__':
     filemode='a',
     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
     datefmt='%H:%M:%S',
-    level=logging.DEBUG)
+    level=logging.INFO)
   logger = logging.getLogger(__name__)
   daemon = TestDaemon('/var/run/' + file_name + '.pid')
   if len(sys.argv) == 2:
