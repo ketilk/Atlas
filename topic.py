@@ -19,7 +19,7 @@ class Topic(object):
       return False
   
   def __str__(self):
-    return self.name + ', ' + self.key + ', ' + str(self._data)
+    return str(self.time) + ', ' + self.name + ', ' + self.key + ', ' + str(self._data)
   
   def get_data(self):
     return self._data
