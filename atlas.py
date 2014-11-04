@@ -134,9 +134,11 @@ class AtlasDaemon(Daemon):
     except:
       self.logger.warning('Error reading Atlas configuration file.')
     try:
-      self._init()
+      if not self._init():
+        return
     except:
       self.logger.exception("Exception in daemon init.")
+      return
     while True:
       try:
         self._loop()
