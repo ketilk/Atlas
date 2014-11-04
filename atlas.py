@@ -4,7 +4,7 @@ import pickle
 import time
 import threading
 import topic
-import configparser
+import ConfigParser
 
 from subscriber import Subscriber
 from publisher import Publisher
@@ -128,7 +128,7 @@ class AtlasDaemon(Daemon):
   def run(self):
     self.logger = logging.getLogger(__name__)
     self.atlas = Atlas()
-    self.configuration = configparser.ConfigParser()
+    self.configuration = ConfigParser.ConfigParser()
     try:
       self.configuration.read('/etc/atlas.cfg')
     except:
