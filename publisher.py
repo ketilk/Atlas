@@ -9,4 +9,4 @@ class Publisher(object):
     self._publish = publishfn
     
   def publish(self, data):
-    self._publish(topic.Topic(name, key, data))
+    self._publish(topic.Topic(self.name, self.key, data))
