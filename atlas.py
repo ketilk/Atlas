@@ -22,14 +22,36 @@ class Heartbeat(topic.Topic):
   def __init__(self, key):
     topic.Topic.__init__(self, "heartbeat", key, 1)
 
+class TopicHandler(object):
+  def __init__(name, key):
+    self.name = name
+    self.key = key
+    self.topic = None
+    self.event = threading.Event()
+    self.event.clear()
+    
+  def update_topic(self, topic):
+    if self.name == topic.name and self.key == topic.key:
+      self.topic = topic
+      self.event.set()
+  
+  def get_topic(self, timeout=None):
+    if self.event.wait(timeout):
+      return self.topic
+    else:
+      return None
+
 class Atlas(object):
   
   def __init__(self):
     self.logger = logging.getLogger(__name__)
     self.participants = []
-    self.topic_handlers = []
     self.lock = threading.Lock()
     self.heartbeat = None
+    self.event = threading.Event()
+    self.event.clear()
+    self.topic = None
+    self.topic_handlers = []
     
     thread = threading.Thread(target=self._listen)
     thread.setDaemon(True)
@@ -97,8 +119,10 @@ class Atlas(object):
       self.lock.release()
     elif isinstance(message, topic.Topic):
       self.logger.debug("Handling a topic.")
+      self.topic = message
+      self.event.set()
       for handler in self.topic_handlers:
-        handler(message)
+        handler.update_topic(self.topic)
     else:
       self.logger.info("Message handler called on unknown object.")
 
@@ -111,17 +135,22 @@ class Atlas(object):
     self.lock.release()
     _socket.close()
 
-  def register_topic_handler(self, handler):
+  def get_topic(self, timeout=None):
+    if self.event.wait(timeout):
+      self.event.clear()
+      return self.topic
+    else:
+      return None
+
+  def get_subscriber(self, name, key):
+    self.logger.info('Creating subscriber:' + name + ', ' + key)
+    handler = TopicHandler(name, key)
     self.topic_handlers.append(handler)
-    self.logger.debug("Topic handler registered.")
+    return Subscriber(th)
 
-  def get_subscriber(self, topic):
-    self.logger.info('Creating subscriber with topic ' + str(topic))
-    return Subscriber(topic, self)
-
-  def get_publisher(self, topic):
-    self.logger.info('Creating publisher with topic: ' + str(topic))
-    return Publisher(topic, self)
+  def get_publisher(self, name, key):
+    self.logger.info('Creating publisher: ' + name + ', ' + key)
+    return Publisher(name, key, self._broadcast)
 
 class AtlasDaemon(Daemon):
 
@@ -146,8 +175,8 @@ class AtlasDaemon(Daemon):
         self.logger.exception("Caught exception in main thread.")
         break
   
-  def get_publisher(self, topic):
-    return self.atlas.get_publisher(topic)
+  def get_publisher(self, name, key):
+    return self.atlas.get_publisher(name, key)
   
-  def get_subscriber(self, topic):
-    return self.atlas.get_subscriber(topic)
+  def get_subscriber(self, name, key):
+    return self.atlas.get_subscriber(name, key)

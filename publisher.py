@@ -3,10 +3,10 @@ import pickle
 import topic
 
 class Publisher(object):
-  def __init__(self, topic, atlas):
-    self.topic = topic
-    self.atlas = atlas
+  def __init__(self, name, key, publishfn):
+    self.name = name
+    self.key = key
+    self._publish = publishfn
     
   def publish(self, data):
-    self.topic.data = data
-    self.atlas._broadcast(self.topic)
+    self._publish(topic.Topic(name, key, data))

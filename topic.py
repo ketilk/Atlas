@@ -8,7 +8,7 @@ class Topic(object):
     self.name = name
     self.key = key
     self.time = time.time()
-    self._data = data
+    self.data = data
     
   def __eq__(self, other):
     if isinstance(other, Topic):
@@ -20,12 +20,3 @@ class Topic(object):
   
   def __str__(self):
     return str(self.time) + ', ' + self.name + ', ' + self.key + ', ' + str(self._data)
-  
-  def get_data(self):
-    return self._data
-  
-  def set_data(self, data):
-    self.time = time.time()
-    self._data = data
-    
-  data = property(get_data, set_data)
