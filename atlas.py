@@ -23,7 +23,7 @@ class Heartbeat(topic.Topic):
     topic.Topic.__init__(self, "heartbeat", key, 1)
 
 class TopicHandler(object):
-  def __init__(name, key):
+  def __init__(self, name, key):
     self.name = name
     self.key = key
     self.topic = None
@@ -146,7 +146,7 @@ class Atlas(object):
     self.logger.info('Creating subscriber:' + name + ', ' + key)
     handler = TopicHandler(name, key)
     self.topic_handlers.append(handler)
-    return Subscriber(th)
+    return Subscriber(handler)
 
   def get_publisher(self, name, key):
     self.logger.info('Creating publisher: ' + name + ', ' + key)
