@@ -154,6 +154,11 @@ class Atlas(object):
 
 class AtlasDaemon(Daemon):
 
+  def _init(self):
+    pass
+  def _end(self):
+    pass
+    
   def run(self):
     self.logger = logging.getLogger(__name__)
     self.atlas = Atlas()
@@ -168,12 +173,16 @@ class AtlasDaemon(Daemon):
     except:
       self.logger.exception("Exception in daemon init.")
       return
-    while True:
-      try:
+    try:
+      while True:
         self._loop()
+    except:
+      self.logger.exception("Caught exception in daemon loop.")
+    finally:
+      try:
+        self._end()
       except:
-        self.logger.exception("Caught exception in main thread.")
-        break
+        self.logger.exception("Caught exception in daemon end.")
   
   def get_publisher(self, name, key):
     return self.atlas.get_publisher(name, key)
