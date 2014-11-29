@@ -37,6 +37,7 @@ class TopicHandler(object):
   
   def get_topic(self, timeout=None):
     if self.event.wait(timeout):
+      self.event.clear()
       return self.topic
     else:
       return None
